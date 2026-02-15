@@ -60,6 +60,28 @@
             color: var(--primary-gold);
         }
 
+        /* Logo Glow Effect */
+        .logo-glow {
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.6), 0 0 5px rgba(255, 215, 0, 0.4);
+            border: 2px solid var(--primary-gold);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            object-fit: cover;
+            background: black;
+        }
+        .logo-glow:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(138, 43, 226, 0.8), 0 0 10px rgba(255, 215, 0, 0.6);
+            cursor: pointer;
+        }
+
+        /* Profile Pic Glow */
+        .profile-glow {
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+            border: 2px solid var(--primary-gold);
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -102,35 +124,49 @@
         .markdown-body ul { list-style-type: disc; margin-right: 1.5rem; }
         .markdown-body ol { list-style-type: decimal; margin-right: 1.5rem; }
 
-        /* Notification Styles */
-        #notificationDot {
-            display: none;
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 8px;
-            height: 8px;
-            background-color: red;
-            border-radius: 50%;
-            border: 1px solid white;
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 0, 0, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+        .animate-pulse-red {
+            animation: pulse-red 2s infinite;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <nav class="glass-panel sticky top-0 z-50 px-6 py-3 flex justify-between items-center neon-border-purple border-b-2 border-b-[#8A2BE2] border-0 rounded-none">
+    <!-- Logo Modal -->
+    <div id="logoModal" onclick="this.classList.add('hidden')" class="fixed inset-0 z-[100] bg-black/90 hidden flex items-center justify-center cursor-pointer backdrop-blur-md animate-fade-in">
+        <img src="IMG_1068.PNG.jpg" class="max-w-[90%] max-h-[90%] rounded-full shadow-[0_0_50px_rgba(138,43,226,0.5)] border-4 border-[#FFD700]">
+    </div>
+
+    <nav class="glass-panel sticky top-0 z-50 px-6 py-3 flex justify-between items-center neon-border-purple border-b-2 border-b-[#8A2BE2] border-0 rounded-none relative">
+        <!-- Right Side: Logo -->
         <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold neon-text-gold tracking-widest">♡[NO+SH]</h1>
+            <img src="IMG_1068.PNG.jpg" onclick="document.getElementById('logoModal').classList.remove('hidden')" alt="Logo" class="w-12 h-12 logo-glow">
+            <h1 class="text-2xl font-bold neon-text-gold tracking-widest hidden sm:block">NOUR.NADY</h1>
         </div>
+
+        <!-- Center: User Info (Name & Picture) -->
+        <div id="navProfile" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 hidden">
+            <!-- Content injected by JS -->
+        </div>
+
+        <!-- Left Side: Controls -->
         <div class="flex items-center gap-4">
-            <div class="relative">
-                <button id="notiToggle" class="p-2 rounded-full hover:bg-white/10 transition text-[#FFD700]">
-                    <i class="fas fa-bell"></i>
-                    <span id="notificationDot"></span>
+            <!-- Notification Bell -->
+            <div class="relative hidden" id="notifWrapper">
+                <button onclick="window.toggleNotifMenu()" class="p-2 rounded-full hover:bg-white/10 transition relative">
+                    <i class="fas fa-bell text-[#FFD700] text-xl"></i>
+                    <span id="notifBadge" class="absolute top-1 right-1 w-3 h-3 bg-red-600 rounded-full hidden animate-pulse-red border border-black"></span>
                 </button>
-                <div id="notiMenu" class="hidden absolute left-0 mt-2 w-64 glass-panel neon-border-gold rounded-lg shadow-xl z-[60] max-h-80 overflow-y-auto">
-                    <div class="p-2 border-b border-gray-700 text-xs font-bold text-center">الإشعارات</div>
-                    <div id="notiList" class="p-2 text-xs space-y-2"></div>
+                <div id="notifDropdown" class="hidden absolute left-0 top-12 w-80 glass-panel rounded-xl max-h-96 overflow-y-auto z-50 neon-border-gold shadow-2xl">
+                    <div class="p-3 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-black/80 backdrop-blur">
+                        <h4 class="font-bold text-white">الإشعارات</h4>
+                        <button onclick="window.toggleNotifMenu()" class="text-xs text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="notifList" class="p-2 space-y-2"></div>
                 </div>
             </div>
 
@@ -159,9 +195,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, setDoc, getDoc, arrayUnion, arrayRemove, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, setDoc, getDoc, arrayUnion, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBnGRKtuNq37uFTVs4n16jWshKu5rMaXnQ",
@@ -176,28 +211,35 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const analytics = getAnalytics(app);
 
         let currentUser = null;
         let userData = null;
         let currentLang = 'ar';
-        let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
-        let currentExamQuestions = [];
         
+        const DEFAULT_API_KEY = ""; 
+        let geminiApiKey = localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
+
+        let currentExamQuestions = [];
+        let notifUnsubscribe = null;
+        let isSigningUp = false;
+        let showSignupSuccess = false;
+
         const ADMIN_EMAIL = "noornady00@gmail.com";
         const ADMIN_PASS = "noornady2007";
+        const ADMIN_PHONE = "01000000000"; 
+        const PHONE_DOMAIN = "@nournady.platform";
 
         const dictionary = {
             ar: {
-                welcome: "مرحباً ي",
-                subtitle: "منصه لطلاب كلية التربية - قسم الرياضيات",
+                welcome: "مرحباً يا...",
+                subtitle: " منصة لطلاب كلية التربية - قسم الرياضيات" ,
                 student: "طالب",
                 admin: "مشرف",
                 login: "تسجيل الدخول",
                 signup: "إنشاء حساب جديد",
                 email: "البريد الإلكتروني",
                 password: "كلمة المرور",
-                name: "الاسم ",
+                name: "الاسم الرباعي",
                 phone: "رقم الهاتف",
                 year: "الفرقة الدراسية",
                 year1: "الفرقة الأولى",
@@ -206,13 +248,14 @@
                 year4: "الفرقة الرابعة",
                 confirmPass: "تأكيد كلمة المرور",
                 submit: "إرسال الطلب",
-                waitApproval: "تم إرسال طلبك بنجاح! يرجى انتظار موافقة المشرف خلال 24 ساعة.",
+                waitApproval: "تم إرسال طلبك بنجاح! يرجى انتظار موافقة المشرف.",
                 dashboard: "لوحة التحكم",
                 courses: "المواد الدراسية",
                 exams: "الامتحانات",
                 files: "الملفات",
                 requests: "طلبات التسجيل",
                 students: "الطلاب",
+                notifications: "الإشعارات",
                 aiAssistant: "المساعد الذكي",
                 settings: "الإعدادات",
                 logout: "تسجيل الخروج",
@@ -230,8 +273,8 @@
                 wrong: "إجابة خاطئة",
                 send: "إرسال",
                 typeMsg: "اكتب رسالتك هنا...",
-                saveApiKey: "حفظ مفتاح Gemini API",
-                enterApiKey: "أدخل مفتاح Gemini API لتفعيل الذكاء الاصطناعي",
+                saveApiKey: "حفظ المفتاح",
+                enterApiKey: "أدخل مفتاح Gemini API",
                 noData: "لا توجد بيانات حالياً",
                 videoLink: "رابط يوتيوب",
                 desc: "الوصف",
@@ -243,7 +286,7 @@
                 mcq: "اختر من متعدد",
                 tf: "صح وخطأ",
                 essay: "مقالي",
-                generating: "جارٍ التوليد بالذكاء الاصطناعي...",
+                generating: "جارٍ التوليد...",
                 examResult: "نتيجة الامتحان",
                 showAns: "عرض الإجابات",
                 yourAns: "إجابتك",
@@ -257,10 +300,19 @@
                 addQuestion: "إضافة السؤال للقائمة",
                 question: "السؤال",
                 options: "الاختيارات (افصل بـ فاصلة)",
-                correctAnswer: "الإجابة الصحيحة أو الحرف (A,B,C..)"
+                correctAnswer: "الإجابة الصحيحة",
+                notifTitle: "عنوان الإشعار",
+                notifBody: "نص الإشعار",
+                sendNotif: "إرسال إشعار",
+                noNotifs: "لا توجد إشعارات جديدة",
+                profilePic: "الصورة الشخصية",
+                changePic: "تغيير الصورة",
+                newPassword: "كلمة المرور الجديدة",
+                saveChanges: "حفظ التعديلات",
+                uploading: "جارٍ الرفع..."
             },
             en: {
-                welcome: "Welcome to ",
+                welcome: "Welcome to NOUR.NADY Platform",
                 subtitle: "The leading platform for Faculty of Education - Math Dept",
                 student: "Student",
                 admin: "Admin",
@@ -277,13 +329,14 @@
                 year4: "Fourth Year",
                 confirmPass: "Confirm Password",
                 submit: "Submit Request",
-                waitApproval: "Request sent successfully! Please wait for admin approval within 24 hours.",
+                waitApproval: "Request sent successfully!",
                 dashboard: "Dashboard",
                 courses: "Courses",
                 exams: "Exams",
                 files: "Files",
                 requests: "Requests",
                 students: "Students",
+                notifications: "Notifications",
                 aiAssistant: "AI Assistant",
                 settings: "Settings",
                 logout: "Logout",
@@ -301,8 +354,8 @@
                 wrong: "Wrong",
                 send: "Send",
                 typeMsg: "Type your message...",
-                saveApiKey: "Save Gemini API Key",
-                enterApiKey: "Enter Gemini API Key to enable AI",
+                saveApiKey: "Save Key",
+                enterApiKey: "Enter API Key",
                 noData: "No data available",
                 videoLink: "YouTube Link",
                 desc: "Description",
@@ -314,11 +367,11 @@
                 mcq: "Multiple Choice",
                 tf: "True/False",
                 essay: "Essay",
-                generating: "Generating with AI...",
+                generating: "Generating...",
                 examResult: "Exam Result",
                 showAns: "Show Answers",
                 yourAns: "Your Answer",
-                correctAns: "Correct Answer (A,B,C..)",
+                correctAns: "Correct Answer",
                 uploadFile: "Upload File (Link)",
                 link: "Link",
                 fileType: "File Type",
@@ -328,7 +381,16 @@
                 addQuestion: "Add Question to List",
                 question: "Question",
                 options: "Options (separate by comma)",
-                correctAnswer: "Correct Answer"
+                correctAnswer: "Correct Answer",
+                notifTitle: "Notification Title",
+                notifBody: "Notification Body",
+                sendNotif: "Send Notification",
+                noNotifs: "No new notifications",
+                profilePic: "Profile Picture",
+                changePic: "Change Photo",
+                newPassword: "New Password",
+                saveChanges: "Save Changes",
+                uploading: "Uploading..."
             }
         };
 
@@ -338,88 +400,99 @@
             const toast = document.getElementById('toast');
             const toastMsg = document.getElementById('toastMsg');
             const toastIcon = document.getElementById('toastIcon');
-            
             toastMsg.textContent = msg;
             toastIcon.className = type === 'success' ? 'fas fa-check-circle text-green-400' : 
                                   type === 'error' ? 'fas fa-exclamation-circle text-red-500' : 
                                   'fas fa-info-circle text-[#FFD700]';
-            
             toast.classList.remove('hidden');
             toast.classList.add('animate-fade-in');
             setTimeout(() => toast.classList.add('hidden'), 3000);
         };
 
-        const render = (html) => {
-            const appDiv = document.getElementById('app');
-            appDiv.innerHTML = html;
-        };
-
-        const toggleTheme = () => {
-            document.body.classList.toggle('light-mode');
-            const icon = document.querySelector('#themeToggle i');
-            if(document.body.classList.contains('light-mode')) {
-                icon.classList.remove('fa-sun');
-                icon.classList.add('fa-moon');
-                icon.classList.replace('text-yellow-400', 'text-purple-600');
-            } else {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-                icon.classList.replace('text-purple-600', 'text-yellow-400');
-            }
-        };
-
-        const toggleLang = () => {
-            currentLang = currentLang === 'ar' ? 'en' : 'ar';
-            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            document.documentElement.lang = currentLang;
-            document.getElementById('langToggle').textContent = currentLang === 'ar' ? 'English' : 'العربية';
-            router(); 
-        };
+        const render = (html) => { document.getElementById('app').innerHTML = html; };
+        const toggleTheme = () => { document.body.classList.toggle('light-mode'); };
+        const toggleLang = () => { currentLang = currentLang === 'ar' ? 'en' : 'ar'; document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr'; router(); };
 
         document.getElementById('themeToggle').addEventListener('click', toggleTheme);
         document.getElementById('langToggle').addEventListener('click', toggleLang);
 
-        // --- Notifications Logic ---
-        const sendNotification = async (msg) => {
-            await addDoc(collection(db, "notifications"), {
-                message: msg,
-                createdAt: new Date().toISOString()
-            });
+        const getAuthEmail = (phone) => {
+            if(phone === ADMIN_PHONE) return ADMIN_EMAIL;
+            return `${phone}${PHONE_DOMAIN}`;
         };
 
-        const listenToNotifications = () => {
-            const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(10));
-            onSnapshot(q, (snapshot) => {
-                const notiList = document.getElementById('notiList');
-                const dot = document.getElementById('notificationDot');
-                if(!notiList) return;
-                
-                if(!snapshot.empty) dot.style.display = 'block';
-                
-                notiList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const item = document.createElement('div');
-                    item.className = 'p-2 bg-white/5 rounded border-b border-gray-800 text-[10px]';
-                    item.innerHTML = `<strong>${data.message}</strong><br><span class="text-gray-500">${new Date(data.createdAt).toLocaleString('ar-EG')}</span>`;
-                    notiList.appendChild(item);
+        window.toggleNotifMenu = async () => {
+            const dropdown = document.getElementById('notifDropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden') && currentUser) {
+                document.getElementById('notifBadge').classList.add('hidden');
+                const q = query(collection(db, "notifications"), orderBy("date", "desc"));
+                const snapshot = await getDocs(q);
+                snapshot.forEach(async (docSnap) => {
+                    const data = docSnap.data();
+                    if (!data.readBy || !data.readBy.includes(currentUser.uid)) {
+                        await updateDoc(doc(db, "notifications", docSnap.id), { readBy: arrayUnion(currentUser.uid) });
+                    }
                 });
+            }
+        };
+
+        const startNotificationListener = () => {
+            if (!currentUser) return;
+            const q = query(collection(db, "notifications"), orderBy("date", "desc"));
+            notifUnsubscribe = onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('notifList');
+                const badge = document.getElementById('notifBadge');
+                if(!list || !badge) return;
+                let unreadCount = 0;
+                let html = '';
+                if (snapshot.empty) { html = `<div class="text-gray-500 text-center p-4 text-xs">${t('noNotifs')}</div>`; } 
+                else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isRead = data.readBy && data.readBy.includes(currentUser.uid);
+                        if (!isRead) unreadCount++;
+                        const icon = data.type === 'alert' ? 'fa-exclamation-circle text-red-500' : data.type === 'success' ? 'fa-check-circle text-green-400' : 'fa-info-circle text-blue-400';
+                        html += `<div class="p-3 rounded bg-white/5 hover:bg-white/10 border-l-2 ${isRead ? 'border-gray-600' : 'border-[#FFD700]'} flex gap-3"><div class="mt-1"><i class="fas ${icon}"></i></div><div><h5 class="font-bold text-sm ${isRead ? 'text-gray-300' : 'text-white'}">${data.title}</h5><p class="text-xs text-gray-400 mt-1">${data.message}</p></div></div>`;
+                    });
+                }
+                list.innerHTML = html;
+                if (unreadCount > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden');
             });
         };
 
-        document.getElementById('notiToggle').addEventListener('click', () => {
-            const menu = document.getElementById('notiMenu');
-            menu.classList.toggle('hidden');
-            document.getElementById('notificationDot').style.display = 'none';
-        });
+        const sendSystemNotification = async (title, message, type = 'info') => {
+            try { await addDoc(collection(db, "notifications"), { title, message, type, date: new Date().toISOString(), readBy: [] }); } catch (e) {}
+        };
+
+        const compressImage = async (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 300; 
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    };
+                };
+            });
+        };
 
         const views = {
             auth: () => `
                 <div class="flex flex-col items-center justify-center min-h-[80vh] w-full animate-fade-in">
-                    <div class="text-center mb-10">
+                    <div class="text-center mb-10 flex flex-col items-center">
+                         <img src="IMG_1068.PNG.jpg" class="w-24 h-24 mb-4 logo-glow rounded-full shadow-[0_0_20px_#FFD700]">
                         <h1 class="text-5xl font-bold mb-4 neon-text-gold">NOUR.NADY</h1>
                         <p class="text-xl text-gray-300">${t('subtitle')}</p>
-                        <div class="mt-4 text-sm text-purple-400 font-mono">${t('aboutDev')}</div>
                     </div>
                     <div class="glass-panel p-8 rounded-2xl w-full max-w-md neon-border-purple">
                         <div class="flex mb-6 border-b border-gray-700">
@@ -429,7 +502,6 @@
                         <form id="authForm" class="flex flex-col gap-4">
                             ${authMode === 'signup' ? `
                                 <input type="text" id="name" placeholder="${t('name')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
-                                <input type="tel" id="phone" placeholder="${t('phone')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
                                 <select id="year" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition">
                                     <option value="1">${t('year1')}</option>
                                     <option value="2">${t('year2')}</option>
@@ -437,7 +509,7 @@
                                     <option value="4">${t('year4')}</option>
                                 </select>
                             ` : ''}
-                            <input type="email" id="email" placeholder="${t('email')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
+                            <input type="text" id="phone" placeholder="${t('phone')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
                             <input type="password" id="password" placeholder="${t('password')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
                             ${authMode === 'signup' ? `
                                 <input type="password" id="confirmPass" placeholder="${t('confirmPass')}" class="p-3 rounded bg-black/50 border border-purple-900 focus:border-[#FFD700] outline-none text-white transition" required>
@@ -446,6 +518,39 @@
                                 ${authMode === 'login' ? t('login') : t('submit')}
                             </button>
                         </form>
+                    </div>
+                </div>
+            `,
+            signupSuccess: () => `
+                <div class="flex flex-col items-center justify-center min-h-[80vh] w-full animate-fade-in">
+                    <div class="glass-panel p-8 rounded-2xl w-full max-w-md neon-border-gold text-center">
+                        <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500 shadow-[0_0_15px_rgba(0,255,0,0.3)]">
+                            <i class="fas fa-check text-4xl text-green-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-[#FFD700] mb-4">تم إرسال الطلب بنجاح</h3>
+                        <p class="text-white text-lg mb-2">حسابك الآن قيد المراجعة</p>
+                        <button onclick="window.resetToLogin()" class="bg-gradient-to-r from-purple-900 to-black border border-[#FFD700] text-[#FFD700] px-8 py-3 rounded font-bold hover:shadow-[0_0_15px_rgba(255,215,0,0.5)] transition">العودة لتسجيل الدخول</button>
+                    </div>
+                </div>
+            `,
+            settings: () => `
+                <div class="glass-panel p-8 rounded-xl max-w-2xl mx-auto neon-border-purple animate-fade-in">
+                    <h2 class="text-2xl font-bold text-[#FFD700] mb-6 border-b border-gray-700 pb-2">${t('settings')}</h2>
+                    <div class="flex flex-col items-center mb-8 relative group">
+                        <img id="profilePreview" src="${userData?.avatar || 'https://ui-avatars.com/api/?name='+userData?.name}" class="w-32 h-32 rounded-full profile-glow object-cover bg-black">
+                        <label for="profileUpload" class="absolute bottom-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-500 shadow-lg"><i class="fas fa-camera"></i></label>
+                        <input type="file" id="profileUpload" accept="image/*" class="hidden" onchange="window.handleImageUpload(this)">
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm text-gray-400">${t('name')}</label>
+                            <input type="text" id="settingName" value="${userData?.name}" class="w-full p-3 bg-black/50 border border-gray-600 rounded text-white focus:border-[#FFD700]">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-400">${t('newPassword')}</label>
+                            <input type="password" id="settingPass" placeholder="********" class="w-full p-3 bg-black/50 border border-gray-600 rounded text-white focus:border-[#FFD700]">
+                        </div>
+                        <button onclick="window.saveSettings()" class="w-full bg-[#FFD700] text-black font-bold py-3 rounded hover:bg-yellow-400 transition">${t('saveChanges')}</button>
                     </div>
                 </div>
             `,
@@ -458,6 +563,7 @@
                             <button onclick="window.setAdminTab('courses')" class="p-3 text-start rounded hover:bg-white/10 ${adminTab === 'courses' ? 'bg-purple-900/50 text-[#FFD700]' : ''}"><i class="fas fa-book w-6"></i> ${t('courses')}</button>
                             <button onclick="window.setAdminTab('exams')" class="p-3 text-start rounded hover:bg-white/10 ${adminTab === 'exams' ? 'bg-purple-900/50 text-[#FFD700]' : ''}"><i class="fas fa-pen-alt w-6"></i> ${t('exams')}</button>
                             <button onclick="window.setAdminTab('files')" class="p-3 text-start rounded hover:bg-white/10 ${adminTab === 'files' ? 'bg-purple-900/50 text-[#FFD700]' : ''}"><i class="fas fa-file-alt w-6"></i> ${t('files')}</button>
+                             <button onclick="window.setAdminTab('notifications')" class="p-3 text-start rounded hover:bg-white/10 ${adminTab === 'notifications' ? 'bg-purple-900/50 text-[#FFD700]' : ''}"><i class="fas fa-bell w-6"></i> ${t('notifications')}</button>
                             <button onclick="window.setAdminTab('settings')" class="p-3 text-start rounded hover:bg-white/10 ${adminTab === 'settings' ? 'bg-purple-900/50 text-[#FFD700]' : ''}"><i class="fas fa-cog w-6"></i> ${t('settings')}</button>
                             <button onclick="handleLogout()" class="p-3 text-start rounded hover:bg-red-900/30 text-red-400 mt-4 border-t border-gray-700"><i class="fas fa-sign-out-alt w-6"></i> ${t('logout')}</button>
                         </div>
@@ -470,29 +576,28 @@
             `,
             studentDashboard: () => `
                 <div class="animate-fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold neon-text-gold">${t('welcome')}, ${userData?.name}</h2>
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <div class="flex items-center gap-4">
+                            <img src="${userData?.avatar || 'https://ui-avatars.com/api/?name='+userData?.name}" class="w-16 h-16 rounded-full profile-glow object-cover">
+                            <div>
+                                <h2 class="text-2xl font-bold neon-text-gold">${t('welcome')}, ${userData?.name}</h2>
+                                <p class="text-sm text-gray-400">${t('year'+userData?.year)}</p>
+                            </div>
+                        </div>
                         <div class="flex gap-2">
-                             <button onclick="window.openAiChat()" class="glass-panel px-4 py-2 rounded text-purple-400 hover:text-white hover:bg-purple-900/50 transition border border-purple-500">
-                                <i class="fas fa-robot mr-2"></i> ${t('aiAssistant')}
-                            </button>
+                             <button onclick="window.openAiChat()" class="glass-panel px-4 py-2 rounded text-purple-400 hover:text-white hover:bg-purple-900/50 transition border border-purple-500"><i class="fas fa-robot mr-2"></i> ${t('aiAssistant')}</button>
+                             <button onclick="window.setStudentTab('settings')" class="glass-panel px-4 py-2 rounded text-[#FFD700] hover:bg-white/10"><i class="fas fa-cog"></i></button>
                             <button onclick="handleLogout()" class="glass-panel px-4 py-2 rounded text-red-400 hover:bg-red-900/20 transition"><i class="fas fa-sign-out-alt"></i></button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="glass-panel p-6 rounded-xl neon-border-purple h-fit">
-                            <h3 class="text-xl font-bold mb-4 text-purple-300">${t('settings')}</h3>
-                            <div class="space-y-3 text-sm">
-                                <p><span class="text-gray-400">${t('name')}:</span> ${userData?.name}</p>
-                                <p><span class="text-gray-400">${t('year')}:</span> ${t('year'+userData?.year)}</p>
-                                <p><span class="text-gray-400">${t('phone')}:</span> ${userData?.phone}</p>
+                    ${studentTab === 'settings' ? views.settings() : `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-3 glass-panel p-6 rounded-xl neon-border-gold">
+                                <h3 class="text-xl font-bold mb-4 text-[#FFD700]">${t('courses')}</h3>
+                                <div id="studentCoursesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                             </div>
                         </div>
-                        <div class="md:col-span-2 glass-panel p-6 rounded-xl neon-border-gold">
-                            <h3 class="text-xl font-bold mb-4 text-[#FFD700]">${t('courses')}</h3>
-                            <div id="studentCoursesList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                        </div>
-                    </div>
+                    `}
                 </div>
             `,
             courseView: () => `
@@ -523,13 +628,11 @@
                 <div class="max-w-3xl mx-auto glass-panel p-8 rounded-xl neon-border-gold animate-fade-in relative">
                     <button onclick="window.exitExam()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
                     <h2 class="text-2xl font-bold mb-2 text-[#FFD700]">${selectedExam.title}</h2>
-                    <p class="text-gray-400 mb-6 text-sm">${selectedExam.description || ''}</p>
                     <div id="examQuestions" class="space-y-8"></div>
                     <button id="submitExamBtn" onclick="submitExam()" class="mt-8 w-full bg-[#FFD700] text-black font-bold py-3 rounded hover:bg-yellow-400 transition">${t('submit')}</button>
                     <div id="examResultPanel" class="hidden mt-8 p-4 bg-black/40 rounded border border-purple-500">
                         <h3 class="text-2xl font-bold text-center text-white mb-2">${t('examResult')}</h3>
                         <div id="scoreDisplay" class="text-4xl font-bold text-center text-[#FFD700] mb-4"></div>
-                        <div id="explanations" class="space-y-4 text-sm"></div>
                     </div>
                 </div>
             `,
@@ -539,10 +642,9 @@
                         <button onclick="closeAiChat()" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i class="fas fa-times fa-lg"></i></button>
                         <div class="p-4 border-b border-purple-900">
                             <h3 class="text-xl font-bold text-purple-400"><i class="fas fa-robot"></i> NOUR.AI Assistant</h3>
-                            <p class="text-xs text-gray-500">Powered by Gemini - Ask about math, upload problems, or explain concepts.</p>
                         </div>
                         <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
-                            <div class="flex justify-start"><div class="bg-purple-900/30 text-gray-200 p-3 rounded-lg rounded-tl-none max-w-[80%]">Welcome! How can I help you with your math studies today?</div></div>
+                            <div class="flex justify-start"><div class="bg-purple-900/30 text-gray-200 p-3 rounded-lg rounded-tl-none max-w-[80%]">أهلاً بك! أنا مساعد نور الذكي. اسألني أي سؤال في الرياضيات.</div></div>
                         </div>
                         <div class="p-4 border-t border-purple-900 bg-black/20">
                             <div class="flex gap-2">
@@ -557,169 +659,181 @@
 
         let authMode = 'login';
         let adminTab = 'requests';
+        let studentTab = 'home';
         let selectedCourse = null;
         let selectedExam = null;
         let showAiChat = false;
 
         window.setAuthMode = (mode) => { authMode = mode; router(); };
         window.setAdminTab = (tab) => { adminTab = tab; router(); loadAdminData(); };
+        window.setStudentTab = (tab) => { studentTab = tab; router(); if(tab==='home') renderStudentCourses(); };
         window.openAiChat = () => { showAiChat = true; router(); };
         window.closeAiChat = () => { showAiChat = false; router(); };
         window.exitExam = () => { selectedExam = null; router(); };
+        window.resetToLogin = () => { showSignupSuccess = false; window.setAuthMode('login'); };
 
         const handleAuth = async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('password').value;
+            const email = getAuthEmail(phone); 
 
             try {
                 if(authMode === 'login') {
-                    if(email === ADMIN_EMAIL && password === ADMIN_PASS) {
-                        currentUser = { email: ADMIN_EMAIL, role: 'admin', uid: 'admin_001' };
-                        router();
-                        return;
+                    if((phone === ADMIN_PHONE || phone === ADMIN_EMAIL) && password === ADMIN_PASS) {
+                        userData = { name: "NOUR NADY", avatar: "IMG_1068.PNG.jpg", role: 'admin' };
+                        currentUser = { email: ADMIN_EMAIL, role: 'admin', uid: 'admin_001', name: "NOUR NADY" };
+                        
+                        try {
+                            const docSnap = await getDoc(doc(db, "users", 'admin_001'));
+                            if (docSnap.exists()) {
+                                userData = docSnap.data();
+                            }
+                        } catch (e) {
+                            console.log("Admin offline/mock login");
+                        }
+                        
+                        router(); return;
                     }
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     const docSnap = await getDoc(doc(db, "users", user.uid));
                     if(docSnap.exists()) {
                         const data = docSnap.data();
-                        if(data.status === 'pending') {
-                            await signOut(auth);
-                            showToast(t('waitApproval'), 'error');
-                        } else if (data.status === 'rejected') {
-                             await signOut(auth);
-                             showToast("Access Denied.", 'error');
-                        } else {
-                            userData = data;
-                            currentUser = user;
-                            router();
-                        }
+                        if(data.status === 'pending') { await signOut(auth); showToast(t('waitApproval'), 'error'); }
+                        else if (data.status === 'rejected') { await signOut(auth); showToast("تم رفض الحساب", 'error'); }
+                        else { userData = data; currentUser = user; router(); }
                     }
                 } else {
-                    if(document.getElementById('password').value !== document.getElementById('confirmPass').value) {
-                        showToast("Passwords do not match", 'error');
-                        return;
-                    }
+                    if(document.getElementById('password').value !== document.getElementById('confirmPass').value) { showToast("كلمات المرور غير متطابقة", 'error'); return; }
+                    isSigningUp = true;
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     await setDoc(doc(db, "users", user.uid), {
                         name: document.getElementById('name').value,
-                        phone: document.getElementById('phone').value,
+                        phone: phone,
                         year: document.getElementById('year').value,
                         email: email,
                         status: 'pending',
                         role: 'student',
-                        createdAt: new Date()
+                        avatar: '',
+                        createdAt: new Date().toISOString()
                     });
-                    showToast(t('waitApproval'), 'success');
-                    await signOut(auth);
-                    window.setAuthMode('login');
+                    showSignupSuccess = true; isSigningUp = false; await signOut(auth);
                 }
-            } catch (error) {
-                showToast(error.message, 'error');
+            } catch (error) { isSigningUp = false; showToast(error.message, 'error'); }
+        };
+
+        window.handleLogout = async () => { if (notifUnsubscribe) notifUnsubscribe(); await signOut(auth); currentUser = null; userData = null; selectedCourse = null; router(); };
+
+        window.handleImageUpload = async (input) => {
+            if(input.files && input.files[0]) {
+                const file = input.files[0];
+                if(file.size > 20 * 1024 * 1024) { showToast("حجم الصورة كبير جداً (أقصى حد 20MB)", "error"); return; }
+                showToast(t('uploading'), 'info');
+                const base64 = await compressImage(file);
+                document.getElementById('profilePreview').src = base64;
+                
+                if (!userData) userData = {};
+                userData.avatar = base64; 
             }
         };
 
-        window.handleLogout = async () => {
-            await signOut(auth);
-            currentUser = null;
-            userData = null;
-            selectedCourse = null;
-            router();
+        window.saveSettings = async () => {
+            const newName = document.getElementById('settingName').value;
+            const newPass = document.getElementById('settingPass').value;
+            try {
+                if (!userData) userData = {}; 
+                const updates = { name: newName };
+                if(userData.avatar) updates.avatar = userData.avatar;
+                
+                await setDoc(doc(db, "users", currentUser.uid), updates, { merge: true });
+                if(newPass) await updatePassword(currentUser, newPass);
+                
+                userData.name = newName;
+                showToast("تم حفظ التعديلات بنجاح", "success");
+                
+                if(currentUser.role === 'admin') window.setAdminTab('settings');
+                else window.setStudentTab('home');
+
+            } catch(e) { showToast("حدث خطأ: " + e.message, "error"); }
         };
 
         const loadAdminData = async () => {
             const container = document.getElementById('adminContent');
             if(!container) return;
-            container.innerHTML = '<div class="loader mx-auto w-8 h-8 rounded-full border-4 border-gray-200"></div>';
+            
+            if(adminTab === 'settings') { container.innerHTML = views.settings(); return; }
 
-            if(adminTab === 'settings') {
-                container.innerHTML = `
-                    <div class="space-y-4">
-                        <label class="block text-gray-400">${t('enterApiKey')}</label>
-                        <input type="text" id="apiKeyInput" value="${geminiApiKey}" class="w-full p-3 bg-black/50 border border-purple-900 rounded text-white">
-                        <button onclick="saveApiKey()" class="bg-[#FFD700] text-black px-4 py-2 rounded font-bold">${t('saveApiKey')}</button>
-                    </div>
-                `;
-                return;
+            if(adminTab === 'notifications') {
+                 const q = query(collection(db, "notifications"), orderBy("date", "desc"));
+                 const snapshot = await getDocs(q);
+                 let html = `<div class="glass-panel p-6 rounded-xl border-purple-900/50 mb-6"><div class="grid grid-cols-1 gap-4"><input type="text" id="manualNotifTitle" placeholder="${t('notifTitle')}" class="p-2 bg-black/50 border border-gray-600 rounded text-white"><input type="text" id="manualNotifBody" placeholder="${t('notifBody')}" class="p-2 bg-black/50 border border-gray-600 rounded text-white"></div><button onclick="window.sendManualNotification()" class="mt-4 bg-purple-600 text-white px-6 py-2 rounded w-full">${t('send')}</button></div><div class="space-y-2">`;
+                 snapshot.forEach(doc => { html += `<div class="glass-panel p-4 rounded flex justify-between"><div><h4 class="font-bold text-[#FFD700]">${doc.data().title}</h4><p class="text-sm text-gray-400">${doc.data().message}</p></div><button onclick="window.deleteNotification('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div>`; });
+                 container.innerHTML = html + '</div>';
+                 return;
             }
-
             if(adminTab === 'requests') {
                 const q = query(collection(db, "users"), where("status", "==", "pending"));
-                const querySnapshot = await getDocs(q);
-                if(querySnapshot.empty) { container.innerHTML = `<p class="text-gray-500">${t('noData')}</p>`; return; }
-                let html = '<div class="space-y-4">';
-                querySnapshot.forEach(doc => {
-                    const data = doc.data();
-                    html += `<div class="glass-panel p-4 rounded flex justify-between items-center">
-                        <div><h4 class="font-bold text-[#FFD700]">${data.name}</h4><p class="text-sm text-gray-400">${data.email}</p></div>
-                        <div class="flex gap-2">
-                            <button onclick="updateUserStatus('${doc.id}', 'approved')" class="px-3 py-1 bg-green-600/20 text-green-400 border border-green-600 rounded">${t('approve')}</button>
-                            <button onclick="updateUserStatus('${doc.id}', 'rejected')" class="px-3 py-1 bg-red-600/20 text-red-400 border border-red-600 rounded">${t('reject')}</button>
-                        </div>
-                    </div>`;
-                });
+                const snap = await getDocs(q);
+                let html = snap.empty ? `<p class="text-gray-500">${t('noData')}</p>` : '<div class="space-y-4">';
+                snap.forEach(doc => { html += `<div class="glass-panel p-4 rounded flex justify-between items-center"><div><h4 class="font-bold text-[#FFD700]">${doc.data().name}</h4><p class="text-sm text-gray-400">${doc.data().phone}</p></div><div class="flex gap-2"><button onclick="updateUserStatus('${doc.id}', 'approved')" class="text-green-400 border border-green-600 px-3 rounded">قبول</button><button onclick="updateUserStatus('${doc.id}', 'rejected')" class="text-red-400 border border-red-600 px-3 rounded">رفض</button></div></div>`; });
                 container.innerHTML = html + '</div>';
             }
-
             if(adminTab === 'students') {
-                const q = query(collection(db, "users"), where("role", "==", "student"), where("status", "==", "approved"));
-                const querySnapshot = await getDocs(q);
-                if(querySnapshot.empty) { container.innerHTML = `<p class="text-gray-500">${t('noData')}</p>`; return; }
-                let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-                querySnapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    html += `<div class="glass-panel p-4 rounded relative border-gray-800">
-                        <h4 class="font-bold text-[#FFD700]">${data.name}</h4>
-                        <p class="text-xs text-gray-400">Email: ${data.email}</p>
-                        <p class="text-xs text-gray-400">Phone: ${data.phone}</p>
-                        <p class="text-xs text-gray-400">Year: ${t('year'+data.year)}</p>
-                        <button onclick="deleteUser('${docSnap.id}')" class="absolute top-2 right-2 text-red-500 hover:text-red-400 transition"><i class="fas fa-trash-alt"></i></button>
-                    </div>`;
-                });
-                container.innerHTML = html + '</div>';
+                 const q = query(collection(db, "users"), where("role", "==", "student"));
+                 const snap = await getDocs(q);
+                 let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+                 snap.forEach(doc => { const d = doc.data(); html += `<div class="glass-panel p-4 rounded relative"><div class="flex items-center gap-3"><img src="${d.avatar || 'https://ui-avatars.com/api/?name='+d.name}" class="w-10 h-10 rounded-full"><div><h4 class="font-bold text-[#FFD700]">${d.name}</h4><p class="text-xs text-gray-400">${d.phone}</p></div></div><button onclick="window.deleteUser('${doc.id}')" class="absolute top-2 right-2 text-red-500 z-10 p-2 hover:bg-white/10 rounded"><i class="fas fa-trash"></i></button></div>`; });
+                 container.innerHTML = html + '</div>';
             }
-
             if(adminTab === 'courses') {
-                const querySnapshot = await getDocs(collection(db, "courses"));
-                let html = `<div class="mb-4"><button onclick="addNewCourse()" class="bg-[#FFD700] text-black px-4 py-2 rounded font-bold">+ ${t('addCourse')}</button></div>`;
-                html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-                querySnapshot.forEach(docSnap => {
+                const snap = await getDocs(collection(db, "courses"));
+                let html = `<div class="mb-4"><button onclick="window.addNewCourse()" class="bg-[#FFD700] text-black px-4 py-2 rounded font-bold">+ ${t('addCourse')}</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                snap.forEach(docSnap => { 
+                    const docId = docSnap.id;
                     const data = docSnap.data();
-                    html += `<div class="glass-panel p-4 rounded relative group border-gray-800">
+                    html += `
+                    <div class="glass-panel p-4 rounded relative group">
                         <h4 class="font-bold text-lg text-[#FFD700]">${data.name}</h4>
                         <div class="mt-4 flex flex-col gap-2">
-                            <input type="text" placeholder="YouTube Link" id="vid-${docSnap.id}" class="bg-black/30 p-1 text-sm rounded border border-gray-700 text-white">
-                            <input type="text" placeholder="Title" id="title-${docSnap.id}" class="bg-black/30 p-1 text-sm rounded border border-gray-700 text-white">
-                            <button onclick="addVideoToCourse('${docSnap.id}')" class="text-xs bg-purple-600 py-1 rounded">Add Video</button>
+                            <input type="text" placeholder="YouTube Link" id="vid-${docId}" class="bg-black/30 p-1 rounded text-white text-sm">
+                            <input type="text" placeholder="Title" id="title-${docId}" class="bg-black/30 p-1 rounded text-white text-sm">
+                            <button onclick="window.addVideoToCourse('${docId}')" class="text-xs bg-purple-600 py-1 rounded hover:bg-purple-500">Add Video</button>
                         </div>
-                        <div class="mt-4 border-t border-gray-700 pt-2">
-                            <p class="text-xs text-gray-500 mb-2 font-bold">المحتوى الحالي:</p>
-                            ${(data.videos || []).map(v => `<div class="flex justify-between text-xs bg-white/5 p-1 mb-1 rounded">
-                                <span class="truncate w-32"><i class="fab fa-youtube text-red-500 mr-1"></i> ${v.title}</span>
-                                <button onclick="deleteVideo('${docSnap.id}', '${v.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                            </div>`).join('')}
-                            ${(data.files || []).map(f => `<div class="flex justify-between text-xs bg-blue-900/10 p-1 mb-1 rounded border border-blue-900/20">
-                                <span class="truncate w-32"><i class="fas fa-file-pdf text-blue-400 mr-1"></i> ${f.name}</span>
-                                <button onclick="deleteFile('${docSnap.id}', '${f.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                            </div>`).join('')}
-                            ${(data.exams || []).map(e => `<div class="flex justify-between text-xs bg-green-900/10 p-1 mb-1 rounded border border-green-900/20">
-                                <span class="truncate w-32"><i class="fas fa-pen-alt text-green-400 mr-1"></i> ${e.title}</span>
-                                <button onclick="deleteExam('${docSnap.id}', '${e.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                            </div>`).join('')}
+                        
+                        <div class="mt-4 space-y-2 max-h-40 overflow-y-auto border-t border-gray-700 pt-2 custom-scrollbar">
+                            <p class="text-xs text-gray-500 font-bold mb-1">المحتوى الحالي:</p>
+                            ${(data.videos || []).map(v => `
+                                <div class="flex justify-between items-center text-xs bg-white/5 p-1 rounded">
+                                    <span class="truncate w-32 text-gray-300"><i class="fab fa-youtube text-red-500 mr-1"></i> ${v.title}</span>
+                                    <button onclick="window.deleteVideo('${docId}', '${v.id}')" class="text-red-500 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `).join('')}
+                            ${(data.files || []).map(f => `
+                                <div class="flex justify-between items-center text-xs bg-blue-900/10 p-1 rounded">
+                                    <span class="truncate w-32 text-blue-300"><i class="fas fa-file-pdf mr-1"></i> ${f.name}</span>
+                                    <button onclick="window.deleteFile('${docId}', '${f.id}')" class="text-red-500 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `).join('')}
+                            ${(data.exams || []).map(e => `
+                                <div class="flex justify-between items-center text-xs bg-green-900/10 p-1 rounded">
+                                    <span class="truncate w-32 text-green-300"><i class="fas fa-pen-alt mr-1"></i> ${e.title}</span>
+                                    <button onclick="window.deleteExam('${docId}', '${e.id}')" class="text-red-500 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `).join('')}
                         </div>
-                        <button onclick="deleteCourse('${docSnap.id}')" class="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
-                    </div>`;
+
+                        <button onclick="window.deleteCourse('${docId}')" class="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
+                    </div>`; 
                 });
                 container.innerHTML = html + '</div>';
             }
-
             if(adminTab === 'exams') {
                  currentExamQuestions = [];
-                 const coursesSnap = await getDocs(collection(db, "courses"));
-                 let options = '';
-                 coursesSnap.forEach(d => options += `<option value="${d.id}">${d.data().name}</option>`);
+                 const snap = await getDocs(collection(db, "courses"));
+                 let options = ''; snap.forEach(d => options += `<option value="${d.id}">${d.data().name}</option>`);
+                 
                  container.innerHTML = `
                     <div class="space-y-6">
                         <div class="glass-panel p-6 rounded-xl border-purple-900/50">
@@ -737,21 +851,21 @@
 
                             <div class="glass-panel p-4 rounded-lg bg-white/5 space-y-4">
                                 <h4 class="text-[#8A2BE2] font-bold"><i class="fas fa-plus-circle"></i> إضافة سؤال جديد</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <select id="qType" onchange="window.toggleQuestionOptions()" class="p-2 bg-black/50 border border-gray-600 rounded text-white">
-                                        <option value="mcq">${t('mcq')}</option>
-                                        <option value="tf">${t('tf')}</option>
-                                        <option value="essay">${t('essay')}</option>
+                                
+                                <div class="grid grid-cols-1 gap-4">
+                                    <select id="qType" onchange="window.renderQuestionInputs()" class="p-2 bg-black/50 border border-gray-600 rounded text-white w-full">
+                                        <option value="mcq">اختر من متعدد (MCQ)</option>
+                                        <option value="tf">صح وخطأ (True/False)</option>
+                                        <option value="essay">مقالي (Essay)</option>
                                     </select>
-                                    <input type="text" id="qText" placeholder="${t('question')}" class="p-2 bg-black/50 border border-gray-600 rounded text-white">
+                                    
+                                    <input type="text" id="qText" placeholder="رأس السؤال" class="w-full p-3 bg-black/50 border border-gray-600 rounded text-white">
+                                    
+                                    <div id="qInputs" class="space-y-3 p-3 bg-black/30 rounded border border-gray-700"></div>
+
+                                    <input type="text" id="qExplain" placeholder="تفسير الإجابة الصحيحة" class="w-full p-3 bg-black/50 border border-gray-600 rounded text-white text-sm">
                                 </div>
-                                <div id="optionsContainer">
-                                    <input type="text" id="qOptions" placeholder="${t('options')}" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white">
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input type="text" id="qCorrect" placeholder="${t('correctAnswer')}" class="p-2 bg-black/50 border border-gray-600 rounded text-white">
-                                    <input type="text" id="qExplain" placeholder="${t('explanation')}" class="p-2 bg-black/50 border border-gray-600 rounded text-white">
-                                </div>
+
                                 <button onclick="window.addQuestionToTempList()" class="w-full py-2 bg-purple-900/50 border border-purple-500 text-purple-200 rounded hover:bg-purple-500 hover:text-white transition">
                                     ${t('addQuestion')}
                                 </button>
@@ -760,174 +874,177 @@
                             <div class="mt-6">
                                 <h4 class="text-sm text-gray-400 mb-2">الأسئلة المضافة (<span id="qTempCount">0</span>)</h4>
                                 <div id="tempQuestionsList" class="space-y-2 max-h-40 overflow-y-auto mb-4"></div>
-                                <button onclick="createExam()" class="w-full bg-[#FFD700] text-black font-bold py-3 rounded hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] transition">
+                                <button onclick="window.createExam()" class="w-full bg-[#FFD700] text-black font-bold py-3 rounded hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] transition">
                                     ${t('create')}
                                 </button>
                             </div>
                         </div>
                     </div>
                  `;
+                 setTimeout(window.renderQuestionInputs, 100); 
             }
-
             if(adminTab === 'files') {
-                 const coursesSnap = await getDocs(collection(db, "courses"));
-                 let options = '';
-                 coursesSnap.forEach(d => options += `<option value="${d.id}">${d.data().name}</option>`);
-                 container.innerHTML = `<div class="glass-panel p-6 rounded"><h3 class="text-xl text-[#FFD700] mb-4">${t('uploadFile')}</h3><div class="space-y-4">
-                    <select id="fileCourse" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white">${options}</select>
-                    <input type="text" id="fileName" placeholder="${t('title')}" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white">
-                    <input type="url" id="fileUrl" placeholder="${t('link')}" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white">
-                    <button onclick="addFileToCourse()" class="bg-green-600 text-white px-4 py-2 rounded w-full">${t('create')}</button>
-                 </div></div>`;
+                 const snap = await getDocs(collection(db, "courses"));
+                 let options = ''; snap.forEach(d => options += `<option value="${d.id}">${d.data().name}</option>`);
+                 container.innerHTML = `<div class="glass-panel p-6 rounded"><select id="fileCourse" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white mb-4">${options}</select><input type="text" id="fileName" placeholder="${t('title')}" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white mb-4"><input type="url" id="fileUrl" placeholder="${t('link')}" class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white mb-4"><button onclick="window.addFileToCourse()" class="bg-green-600 text-white px-4 py-2 rounded w-full">${t('create')}</button></div>`;
             }
         };
 
-        window.toggleQuestionOptions = () => {
+        window.renderQuestionInputs = () => {
             const type = document.getElementById('qType').value;
-            const container = document.getElementById('optionsContainer');
-            if(type === 'mcq') container.classList.remove('hidden');
-            else container.classList.add('hidden');
+            const container = document.getElementById('qInputs');
+            
+            if (type === 'mcq') {
+                container.innerHTML = `
+                    <p class="text-xs text-gray-400 mb-2">اكتب الاختيارات واختر الإجابة الصحيحة:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="flex gap-2 items-center"><input type="radio" name="mcqCorrect" value="0" class="accent-green-500"><input type="text" id="opt0" placeholder="اختيار 1" class="flex-1 bg-black/50 p-2 rounded border border-gray-600 text-white"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="mcqCorrect" value="1" class="accent-green-500"><input type="text" id="opt1" placeholder="اختيار 2" class="flex-1 bg-black/50 p-2 rounded border border-gray-600 text-white"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="mcqCorrect" value="2" class="accent-green-500"><input type="text" id="opt2" placeholder="اختيار 3" class="flex-1 bg-black/50 p-2 rounded border border-gray-600 text-white"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="mcqCorrect" value="3" class="accent-green-500"><input type="text" id="opt3" placeholder="اختيار 4" class="flex-1 bg-black/50 p-2 rounded border border-gray-600 text-white"></div>
+                    </div>
+                `;
+            } else if (type === 'tf') {
+                container.innerHTML = `
+                    <p class="text-xs text-gray-400 mb-2">اختر الإجابة الصحيحة:</p>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer bg-white/5 p-2 rounded w-full"><input type="radio" name="tfCorrect" value="True" class="accent-green-500"> <span class="text-white">صح (True)</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer bg-white/5 p-2 rounded w-full"><input type="radio" name="tfCorrect" value="False" class="accent-red-500"> <span class="text-white">خطأ (False)</span></label>
+                    </div>
+                `;
+            } else if (type === 'essay') {
+                container.innerHTML = `
+                    <p class="text-xs text-gray-400 mb-2">الإجابة النموذجية (ستظهر للطالب بعد الحل):</p>
+                    <textarea id="essayModel" placeholder="اكتب الإجابة النموذجية هنا..." class="w-full p-2 bg-black/50 border border-gray-600 rounded text-white h-24"></textarea>
+                `;
+            }
         };
 
         window.addQuestionToTempList = () => {
             const q = document.getElementById('qText').value;
             const type = document.getElementById('qType').value;
-            let correct = document.getElementById('qCorrect').value.trim();
             const explain = document.getElementById('qExplain').value;
-            let options = [];
+            let questionObj = { q, type, explain, id: Date.now() };
 
-            if(type === 'mcq') {
-                options = document.getElementById('qOptions').value.split(',').map(s => s.trim());
-                const alpha = ['A', 'B', 'C', 'D', 'E'];
-                if(alpha.includes(correct.toUpperCase())) {
-                    const idx = alpha.indexOf(correct.toUpperCase());
-                    if(options[idx]) correct = options[idx];
-                }
-            } else if(type === 'tf') {
-                options = [currentLang === 'ar' ? 'صح' : 'True', currentLang === 'ar' ? 'خطأ' : 'False'];
-                if(correct === '1' || correct.toLowerCase() === 'true' || correct === 'صح') correct = options[0];
-                if(correct === '0' || correct.toLowerCase() === 'false' || correct === 'خطأ') correct = options[1];
+            if(!q) { showToast("اكتب رأس السؤال", "error"); return; }
+
+            if (type === 'mcq') {
+                const opts = [
+                    document.getElementById('opt0').value,
+                    document.getElementById('opt1').value,
+                    document.getElementById('opt2').value,
+                    document.getElementById('opt3').value
+                ];
+                const correctIdx = document.querySelector('input[name="mcqCorrect"]:checked')?.value;
+                if(opts.some(o => !o) || !correctIdx) { showToast("أكمل الاختيارات واختر الصحيح", "error"); return; }
+                questionObj.options = opts;
+                questionObj.answer = opts[correctIdx];
+            } else if (type === 'tf') {
+                const correct = document.querySelector('input[name="tfCorrect"]:checked')?.value;
+                if(!correct) { showToast("اختر صح أم خطأ", "error"); return; }
+                questionObj.options = ['True', 'False'];
+                questionObj.answer = correct;
+            } else {
+                const model = document.getElementById('essayModel').value;
+                if(!model) { showToast("اكتب الإجابة النموذجية", "error"); return; }
+                questionObj.answer = model; 
             }
 
-            if(!q || !correct) { showToast("برجاء إكمال بيانات السؤال", "error"); return; }
-            currentExamQuestions.push({ q, type, options, answer: correct, explain });
+            currentExamQuestions.push(questionObj);
             document.getElementById('qTempCount').textContent = currentExamQuestions.length;
-            const list = document.getElementById('tempQuestionsList');
-            const item = document.createElement('div');
-            item.className = 'text-xs bg-white/5 p-2 rounded flex justify-between border-l-2 border-purple-500';
-            item.innerHTML = `<span>${q}</span><span class="text-gray-500">${type}</span>`;
-            list.appendChild(item);
+            document.getElementById('tempQuestionsList').innerHTML += `<div class="bg-white/5 p-2 mb-1 rounded flex justify-between"><span>${q}</span><span class="text-xs bg-purple-900 px-2 rounded">${type}</span></div>`;
+            
             document.getElementById('qText').value = '';
-            document.getElementById('qCorrect').value = '';
             document.getElementById('qExplain').value = '';
-            if(type === 'mcq') document.getElementById('qOptions').value = '';
-            showToast("تمت إضافة السؤال للقائمة", "success");
+            window.renderQuestionInputs();
         };
 
-        window.createExam = async () => {
-            const courseId = document.getElementById('examCourse').value;
-            const title = document.getElementById('examTitle').value;
-            if(!title || currentExamQuestions.length === 0) { showToast("أدخل العنوان وأضف أسئلة أولاً", "error"); return; }
-            try {
-                const examObj = { id: Date.now().toString(), title, questions: currentExamQuestions, createdAt: new Date().toISOString() };
-                await updateDoc(doc(db, "courses", courseId), { exams: arrayUnion(examObj) });
-                await sendNotification(`تمت إضافة امتحان جديد: ${title}`);
-                showToast("تم إنشاء الامتحان بنجاح", "success");
-                loadAdminData();
-            } catch(e) { showToast("خطأ في حفظ الامتحان", "error"); }
+        window.sendManualNotification = async () => {
+            const title = document.getElementById('manualNotifTitle').value;
+            const body = document.getElementById('manualNotifBody').value;
+            if(!title || !body) return;
+            await sendSystemNotification(title, body, 'info'); showToast("تم الإرسال", "success"); loadAdminData();
+        };
+        window.deleteNotification = async (id) => { await deleteDoc(doc(db, "notifications", id)); loadAdminData(); };
+        window.updateUserStatus = async (uid, status) => { await updateDoc(doc(db, "users", uid), { status: status }); loadAdminData(); };
+        
+        window.deleteUser = async (id) => { 
+            if(confirm("هل أنت متأكد من حذف هذا الطالب نهائياً من الموقع وقاعدة البيانات؟\nلن يتمكن من الدخول مجدداً.")) { 
+                try {
+                    await deleteDoc(doc(db, "users", id)); 
+                    showToast("تم حذف الطالب وإزالة صلاحياته", "success");
+                    loadAdminData(); 
+                } catch(e) {
+                    console.error(e);
+                    showToast("حدث خطأ: " + e.message, "error");
+                }
+            } 
         };
 
-        window.deleteUser = async (id) => {
-            if(confirm("Are you sure you want to delete this student?")) {
-                await deleteDoc(doc(db, "users", id));
-                showToast("User Deleted", "success");
-                loadAdminData();
-            }
-        };
-
-        window.addNewCourse = async () => {
-            const name = prompt("Enter Course Name / أدخل اسم الكورس:");
-            if(!name) return;
-            try {
-                await addDoc(collection(db, "courses"), { name: name, videos: [], files: [], exams: [] });
-                await sendNotification(`تمت إضافة كورس جديد: ${name}`);
-                showToast("Course Added Successfully", "success");
-                loadAdminData();
-            } catch(e) { showToast("Error adding course", "error"); }
-        };
-
-        window.deleteCourse = async (id) => {
-            if(confirm("Delete this course?")) {
-                await deleteDoc(doc(db, "courses", id));
-                loadAdminData();
-            }
-        };
-
+        window.addNewCourse = async () => { const name = prompt("Course Name:"); if(name) { await addDoc(collection(db, "courses"), { name, videos: [], files: [], exams: [] }); loadAdminData(); } };
+        window.deleteCourse = async (id) => { if(confirm("حذف الكورس؟")) { await deleteDoc(doc(db, "courses", id)); loadAdminData(); } };
+        
         window.deleteVideo = async (courseId, videoId) => {
-            if(!confirm("Delete this video?")) return;
-            const courseRef = doc(db, "courses", courseId);
-            const snap = await getDoc(courseRef);
-            const videos = snap.data().videos || [];
-            const updated = videos.filter(v => v.id !== videoId);
-            await updateDoc(courseRef, { videos: updated });
-            loadAdminData();
-        };
-
-        window.deleteExam = async (courseId, examId) => {
-            if(!confirm("هل أنت متأكد من حذف هذا الامتحان؟")) return;
-            const courseRef = doc(db, "courses", courseId);
-            const snap = await getDoc(courseRef);
-            const exams = snap.data().exams || [];
-            const updated = exams.filter(e => e.id !== examId);
-            await updateDoc(courseRef, { exams: updated });
-            showToast("تم حذف الامتحان", "success");
-            loadAdminData();
+            if(!confirm("هل أنت متأكد من حذف هذا الفيديو؟")) return;
+            const ref = doc(db, "courses", courseId);
+            const snap = await getDoc(ref);
+            if(snap.exists()) {
+                const videos = snap.data().videos || [];
+                const updated = videos.filter(v => v.id !== videoId);
+                await updateDoc(ref, { videos: updated });
+                showToast("تم الحذف", "success");
+                loadAdminData();
+            }
         };
 
         window.deleteFile = async (courseId, fileId) => {
             if(!confirm("هل أنت متأكد من حذف هذا الملف؟")) return;
-            const courseRef = doc(db, "courses", courseId);
-            const snap = await getDoc(courseRef);
-            const files = snap.data().files || [];
-            const updated = files.filter(f => f.id !== fileId);
-            await updateDoc(courseRef, { files: updated });
-            showToast("تم حذف الملف", "success");
-            loadAdminData();
+            const ref = doc(db, "courses", courseId);
+            const snap = await getDoc(ref);
+            if(snap.exists()) {
+                const files = snap.data().files || [];
+                const updated = files.filter(f => f.id !== fileId);
+                await updateDoc(ref, { files: updated });
+                showToast("تم الحذف", "success");
+                loadAdminData();
+            }
         };
 
-        window.addVideoToCourse = async (courseId) => {
-            const link = document.getElementById(`vid-${courseId}`).value;
-            const title = document.getElementById(`title-${courseId}`).value;
-            if(!link) return;
-            let videoId = link.includes('v=') ? link.split('v=')[1].split('&')[0] : link.split('/').pop();
-            const videoObj = { id: Date.now().toString(), title: title || 'Lesson', url: `https://www.youtube.com/embed/${videoId}`, originalLink: link };
-            await updateDoc(doc(db, "courses", courseId), { videos: arrayUnion(videoObj) });
-            await sendNotification(`تم رفع فيديو جديد: ${title}`);
-            showToast("Video Added", 'success');
-            loadAdminData();
+        window.deleteExam = async (courseId, examId) => {
+            if(!confirm("هل أنت متأكد من حذف هذا الامتحان؟")) return;
+            const ref = doc(db, "courses", courseId);
+            const snap = await getDoc(ref);
+            if(snap.exists()) {
+                const exams = snap.data().exams || [];
+                const updated = exams.filter(e => e.id !== examId);
+                await updateDoc(ref, { exams: updated });
+                showToast("تم الحذف", "success");
+                loadAdminData();
+            }
         };
 
+        window.addVideoToCourse = async (id) => {
+             const link = document.getElementById(`vid-${id}`).value;
+             const title = document.getElementById(`title-${id}`).value;
+             if(!link) return;
+             let vId = link.includes('v=') ? link.split('v=')[1].split('&')[0] : link.split('/').pop();
+             await updateDoc(doc(db, "courses", id), { videos: arrayUnion({ id: Date.now().toString(), title: title||'Lesson', url: `https://www.youtube.com/embed/${vId}`, originalLink: link }) });
+             await sendSystemNotification("فيديو جديد", `تم إضافة درس: ${title}`, "info"); loadAdminData();
+        };
         window.addFileToCourse = async () => {
-             const courseId = document.getElementById('fileCourse').value;
+             const id = document.getElementById('fileCourse').value;
              const name = document.getElementById('fileName').value;
              const url = document.getElementById('fileUrl').value;
              if(!url) return;
-             await updateDoc(doc(db, "courses", courseId), { files: arrayUnion({ id: Date.now().toString(), name, url, date: new Date().toISOString() }) });
-             await sendNotification(`تم رفع ملف جديد: ${name}`);
-             showToast("File Added", 'success');
-             loadAdminData();
+             await updateDoc(doc(db, "courses", id), { files: arrayUnion({ id: Date.now().toString(), name, url, date: new Date().toISOString() }) });
+             await sendSystemNotification("ملف جديد", `تم رفع ملف: ${name}`, "success"); showToast("File Added", 'success'); loadAdminData();
         };
-
-        window.updateUserStatus = async (uid, status) => {
-            await updateDoc(doc(db, "users", uid), { status: status });
-            loadAdminData();
-        };
-
-        window.saveApiKey = () => {
-            const key = document.getElementById('apiKeyInput').value;
-            localStorage.setItem('gemini_api_key', key);
-            geminiApiKey = key;
-            showToast("API Key Saved", 'success');
+        window.createExam = async () => {
+            const id = document.getElementById('examCourse').value;
+            const title = document.getElementById('examTitle').value;
+            if(!title || currentExamQuestions.length === 0) return;
+            await updateDoc(doc(db, "courses", id), { exams: arrayUnion({ id: Date.now().toString(), title, questions: currentExamQuestions }) });
+            await sendSystemNotification("امتحان جديد", `تم إضافة امتحان: ${title}`, "alert"); showToast("Exam Created", "success"); loadAdminData();
         };
 
         const renderStudentCourses = async () => {
@@ -938,120 +1055,147 @@
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const el = document.createElement('div');
-                el.className = 'glass-panel p-4 rounded hover:bg-white/5 cursor-pointer transition flex items-center justify-between group';
-                el.innerHTML = `<div class="flex items-center gap-3"><i class="fas fa-book text-purple-400 text-xl"></i><span class="font-bold text-lg">${data.name}</span></div><i class="fas fa-chevron-left text-gray-500 group-hover:text-[#FFD700] rtl:rotate-180"></i>`;
+                el.className = 'glass-panel p-4 rounded hover:bg-white/5 cursor-pointer transition flex items-center justify-between group h-32';
+                el.innerHTML = `<div class="flex items-center gap-3"><i class="fas fa-book text-purple-400 text-3xl"></i><span class="font-bold text-xl">${data.name}</span></div><i class="fas fa-chevron-left text-gray-500 rtl:rotate-180"></i>`;
                 el.onclick = () => { selectedCourse = { id: docSnap.id, ...data }; router(); };
                 list.appendChild(el);
             });
         };
 
         const renderCourseContent = () => {
-            const vidList = document.getElementById('videoList');
-            const fileList = document.getElementById('fileList');
-            const examList = document.getElementById('examList');
-            vidList.innerHTML = (selectedCourse.videos || []).map(v => `<div class="mb-6"><div class="aspect-video w-full rounded-lg overflow-hidden border border-gray-800 bg-black"><iframe src="${v.url}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div><div class="flex justify-between mt-2"><h4 class="font-bold text-[#FFD700]">${v.title}</h4><a href="${v.originalLink}" target="_blank" class="text-xs bg-red-600 text-white px-2 py-1 rounded">YouTube</a></div></div>`).join('') || 'No videos.';
-            examList.innerHTML = (selectedCourse.exams || []).map((e, idx) => `<div onclick="startExam(${idx})" class="p-3 bg-white/5 rounded hover:bg-white/10 cursor-pointer flex justify-between items-center transition"><span>${e.title}</span><i class="fas fa-play text-green-400"></i></div>`).join('') || 'No exams.';
-            fileList.innerHTML = (selectedCourse.files || []).map(f => `<a href="${f.url}" target="_blank" class="p-3 bg-white/5 rounded hover:bg-white/10 flex justify-between items-center transition block"><span>${f.name}</span><i class="fas fa-download text-blue-400"></i></a>`).join('') || 'No files.';
+            document.getElementById('videoList').innerHTML = (selectedCourse.videos || []).map(v => `<div class="mb-6"><iframe src="${v.url}" class="w-full aspect-video rounded-lg" allowfullscreen></iframe><h4 class="mt-2 font-bold text-[#FFD700]">${v.title}</h4></div>`).join('');
+            document.getElementById('examList').innerHTML = (selectedCourse.exams || []).map((e, i) => `<div onclick="startExam(${i})" class="p-3 bg-white/5 rounded cursor-pointer hover:bg-white/10 flex justify-between"><span>${e.title}</span><i class="fas fa-play text-green-400"></i></div>`).join('');
+            document.getElementById('fileList').innerHTML = (selectedCourse.files || []).map(f => `<a href="${f.url}" target="_blank" class="p-3 bg-white/5 rounded block hover:bg-white/10 flex justify-between"><span>${f.name}</span><i class="fas fa-download text-blue-400"></i></a>`).join('');
         };
 
-        window.startExam = (index) => { selectedExam = selectedCourse.exams[index]; router(); renderExam(); };
-
-        const renderExam = () => {
-            const container = document.getElementById('examQuestions');
-            const alpha = ['A', 'B', 'C', 'D', 'E', 'F'];
-            container.innerHTML = selectedExam.questions.map((q, i) => {
-                let optionsHtml = '';
-                if(q.type === 'essay') {
-                    optionsHtml = `<textarea name="q${i}" class="w-full p-3 bg-white/5 rounded border border-gray-700 text-white outline-none focus:border-purple-500" placeholder="اكتب إجابتك هنا..."></textarea>`;
-                } else {
-                    optionsHtml = `<div class="space-y-2">${q.options.map((opt, idx) => `
-                        <label class="flex items-center gap-3 p-3 rounded bg-white/5 cursor-pointer hover:bg-white/10">
-                            <input type="radio" name="q${i}" value="${opt}" class="accent-purple-500 w-4 h-4">
-                            <span class="text-[#FFD700] font-bold">${q.type === 'mcq' ? alpha[idx] + ') ' : ''}</span>
-                            <span>${opt}</span>
-                        </label>`).join('')}</div>`;
-                }
-                return `<div class="bg-black/30 p-4 rounded border border-gray-700 q-block" id="q-${i}">
-                    <p class="font-bold text-lg mb-4"><span class="text-[#FFD700]">Q${i+1}:</span> ${q.q}</p>
-                    ${optionsHtml}
-                    <div class="hidden mt-3 p-3 rounded bg-purple-900/30 border border-purple-500 text-sm explanation-box">
-                        <p class="font-bold text-green-400">${q.type === 'essay' ? 'الإجابة النموذجية' : 'الإجابة الصحيحة'}: ${q.answer}</p>
-                        <p class="mt-1 text-gray-300">${q.explain || ''}</p>
+        window.startExam = (index) => { selectedExam = selectedCourse.exams[index]; router(); 
+            document.getElementById('examQuestions').innerHTML = selectedExam.questions.map((q, i) => 
+                `<div class="bg-black/30 p-4 rounded border border-gray-700 q-block relative overflow-hidden" id="qblock-${i}">
+                    <p class="font-bold mb-4 text-lg text-white">Q${i+1}: ${q.q}</p>
+                    ${q.type === 'mcq' ? `<div class="space-y-2 options-container">${q.options.map(o => `
+                        <label class="block p-3 bg-white/5 rounded cursor-pointer hover:bg-white/10 transition border border-transparent">
+                            <input type="radio" name="q${i}" value="${o}" class="mr-2"> ${o}
+                        </label>`).join('')}</div>` : 
+                      q.type === 'tf' ? `<div class="flex gap-4 options-container">
+                        <label class="flex-1 p-3 bg-white/5 rounded cursor-pointer hover:bg-white/10 transition text-center border border-transparent"><input type="radio" name="q${i}" value="True"> صح</label>
+                        <label class="flex-1 p-3 bg-white/5 rounded cursor-pointer hover:bg-white/10 transition text-center border border-transparent"><input type="radio" name="q${i}" value="False"> خطأ</label></div>` :
+                      `<textarea name="q${i}" class="w-full bg-white/5 p-3 rounded border border-gray-600 text-white min-h-[100px]" placeholder="اكتب إجابتك هنا..."></textarea>`
+                    }
+                    <div id="res-${i}" class="hidden mt-4 p-4 bg-gray-900/80 rounded border-t border-gray-600 animate-fade-in">
+                        <p class="font-bold text-[#FFD700] mb-1">الإجابة الصحيحة / النموذجية:</p>
+                        <p class="text-white mb-2 text-lg">${q.answer}</p>
+                        ${q.explain ? `<p class="text-sm text-gray-400 border-t border-gray-700 pt-2"><strong class="text-purple-400">التفسير:</strong> ${q.explain}</p>` : ''}
                     </div>
-                </div>`;
-            }).join('');
+                </div>`
+            ).join('');
         };
-
+        
         window.submitExam = () => {
             let score = 0;
-            document.querySelectorAll('.q-block').forEach((block, i) => {
-                const qData = selectedExam.questions[i];
-                let isCorrect = false;
-                if(qData.type === 'essay') {
-                    const typed = block.querySelector(`textarea[name="q${i}"]`).value;
-                    isCorrect = typed.length > 5;
+            document.querySelectorAll('.q-block').forEach((b, i) => {
+                const q = selectedExam.questions[i];
+                const resultDiv = document.getElementById(`res-${i}`);
+                resultDiv.classList.remove('hidden'); 
+
+                if(q.type !== 'essay') { 
+                    const selected = b.querySelector('input:checked');
+                    if(selected && selected.value === q.answer) {
+                        score++;
+                        b.classList.add('border-green-500');
+                        b.classList.remove('border-gray-700');
+                    } else {
+                        b.classList.add('border-red-500');
+                        b.classList.remove('border-gray-700');
+                    }
                 } else {
-                    const selected = block.querySelector(`input[name="q${i}"]:checked`);
-                    isCorrect = selected && selected.value === qData.answer;
-                }
-                block.querySelector('.explanation-box').classList.remove('hidden');
-                if(isCorrect) { 
-                    if(qData.type !== 'essay') score++; 
-                    block.classList.add('border-green-500'); 
-                } else { 
-                    block.classList.add('border-red-500'); 
+                    b.classList.add('border-yellow-500'); 
                 }
             });
+            document.getElementById('scoreDisplay').innerHTML = `
+                <span class="text-[#FFD700]">${score}</span> / <span class="text-gray-400">${selectedExam.questions.filter(q=>q.type!=='essay').length}</span>
+                <p class="text-sm text-gray-400 mt-2">الأسئلة المقالية تحتاج مراجعة يدوية.</p>
+            `;
             document.getElementById('examResultPanel').classList.remove('hidden');
-            document.getElementById('scoreDisplay').textContent = `${score} / ${selectedExam.questions.filter(q => q.type !== 'essay').length}`;
-            document.getElementById('submitExamBtn').classList.add('hidden');
+            document.getElementById('submitExamBtn').classList.add('hidden'); 
+            window.scrollTo(0,0);
         };
 
         window.sendAiMessage = async () => {
             const input = document.getElementById('aiInput');
             const msg = input.value; if(!msg) return;
-            const chatContainer = document.getElementById('chatMessages');
-            chatContainer.innerHTML += `<div class="flex justify-end"><div class="bg-[#FFD700] text-black p-3 rounded-lg max-w-[80%]">${msg}</div></div>`;
+            const chat = document.getElementById('chatMessages');
+            chat.innerHTML += `<div class="flex justify-end"><div class="bg-[#FFD700] text-black p-3 rounded-lg max-w-[80%]">${msg}</div></div>`;
             input.value = '';
-            if(!geminiApiKey) { chatContainer.innerHTML += `<div class="flex justify-start"><div class="bg-red-900/50 p-3 rounded-lg">API Key Missing</div></div>`; return; }
-            const loadingId = 'loading-' + Date.now();
-            chatContainer.innerHTML += `<div id="${loadingId}" class="flex justify-start"><div class="bg-purple-900/30 p-3 rounded-lg">Thinking...</div></div>`;
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Math tutor, use Markdown." }, { text: msg }] }] })
-                });
-                const data = await response.json();
-                const text = data.candidates[0].content.parts[0].text;
-                document.getElementById(loadingId).remove();
-                chatContainer.innerHTML += `<div class="flex justify-start markdown-body"><div class="bg-purple-900/30 p-3 rounded-lg max-w-[80%] text-sm">${marked.parse(text)}</div></div>`;
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            } catch (e) { if(document.getElementById(loadingId)) document.getElementById(loadingId).remove(); }
+            
+            chat.innerHTML += `<div id="loadingAi" class="flex justify-start"><div class="bg-purple-900/30 p-3 rounded-lg">${t('generating')}</div></div>`;
+            
+            if(geminiApiKey && geminiApiKey !== "") {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`, {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [{ text: "Math tutor, helpful. Answer in Markdown: " + msg }] }] })
+                    });
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    document.getElementById('loadingAi').remove();
+                    chat.innerHTML += `<div class="flex justify-start markdown-body"><div class="bg-purple-900/30 p-3 rounded-lg max-w-[80%] text-sm">${marked.parse(text)}</div></div>`;
+                } catch(e) { 
+                    document.getElementById('loadingAi').remove();
+                    chat.innerHTML += `<div class="flex justify-start"><div class="bg-red-900/30 p-3 rounded-lg">حدث خطأ في الاتصال، سأجيبك من معلوماتي: أعد صياغة السؤال كمسألة رياضية مباشرة.</div></div>`;
+                }
+            } else {
+                setTimeout(() => {
+                    document.getElementById('loadingAi').remove();
+                    let reply = "أنا هنا لمساعدتك في الرياضيات. هل يمكنك توضيح سؤالك أكثر؟";
+                    if(msg.includes("مرحبا") || msg.includes("السلام")) reply = "وعليكم السلام! كيف يمكنني مساعدتك في دراستك اليوم؟";
+                    if(msg.includes("شرح")) reply = "بالتأكيد، أخبرني ما هو الدرس الذي تريد شرحه؟ (تفاضل، تكامل، جبر...)";
+                    chat.innerHTML += `<div class="flex justify-start"><div class="bg-purple-900/30 p-3 rounded-lg max-w-[80%] text-sm">${reply}</div></div>`;
+                }, 1000);
+            }
         };
 
         const router = () => {
+            if (showSignupSuccess) { render(views.signupSuccess()); return; }
             if (currentUser) {
+                document.getElementById('notifWrapper').classList.remove('hidden');
+                
+                const navProfile = document.getElementById('navProfile');
+                navProfile.classList.remove('hidden');
+                navProfile.innerHTML = `
+                    <div class="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full border border-purple-500/30 backdrop-blur-sm">
+                        <img src="${userData?.avatar || 'https://ui-avatars.com/api/?name='+(userData?.name || 'User')}" class="w-8 h-8 rounded-full border border-[#FFD700] object-cover">
+                        <span class="text-sm font-bold text-white hidden md:block">${userData?.name || 'مستخدم'}</span>
+                    </div>
+                `;
+
+                startNotificationListener();
                 if (currentUser.role === 'admin') { render(views.adminDashboard()); loadAdminData(); }
-                else if(selectedExam) { render(views.examView()); renderExam(); }
+                else if(selectedExam) { render(views.examView()); }
                 else if (selectedCourse) { render(views.courseView()); renderCourseContent(); }
                 else { render(views.studentDashboard()); renderStudentCourses(); }
-                if(showAiChat) { document.body.insertAdjacentHTML('beforeend', views.aiChat()); }
-                else { const modal = document.querySelector('.fixed.inset-0.z-50'); if(modal) modal.remove(); }
+                if(showAiChat) document.body.insertAdjacentHTML('beforeend', views.aiChat());
+                else document.querySelector('.fixed.inset-0.z-50')?.remove();
             } else {
+                document.getElementById('notifWrapper').classList.add('hidden');
+                document.getElementById('navProfile').classList.add('hidden'); // Hide profile in auth screen
+                if(notifUnsubscribe) notifUnsubscribe();
                 render(views.auth());
-                document.getElementById('authForm').addEventListener('submit', handleAuth);
+                document.getElementById('authForm')?.addEventListener('submit', handleAuth);
             }
         };
 
         onAuthStateChanged(auth, async (user) => {
+            if (isSigningUp) return;
             if (user) {
-                if(user.email === ADMIN_EMAIL) { currentUser = { ...user, role: 'admin' }; } 
-                else {
+                if(user.email === ADMIN_EMAIL) { 
+                    const docSnap = await getDoc(doc(db, "users", user.uid));
+                    userData = docSnap.exists() ? docSnap.data() : { name: "NOUR NADY", avatar: "IMG_1068.PNG.jpg" };
+                    currentUser = { ...user, role: 'admin' }; 
+                } else {
                     const docSnap = await getDoc(doc(db, "users", user.uid));
                     if(docSnap.exists() && docSnap.data().status === 'approved') { userData = docSnap.data(); currentUser = { ...user, role: 'student' }; }
                     else { await signOut(auth); currentUser = null; }
                 }
-                listenToNotifications();
             } else { currentUser = null; }
             router();
         });
